@@ -1,8 +1,8 @@
 #!/bin/bash
-# chkconfig: 345 99 01
-# description: some startup script
-
 ################################################################################
+## Configure Linux and install Oracle single instance 
+## on Grid Infrastructure Restart 
+## with Oracle ASM on udev persisted disks
 ##
 ## This script only supports Azure currently, mainly due to the disk persistence method
 ##
@@ -362,9 +362,14 @@ unit: sectors
 /dev/sdc4 : start=        0, size=        0, Id= 0
 EOFsdcLayout
 
-set -x
+    set -x # debug has been useful here
 
     if ! sfdisk $p_disk < $l_layoutFile; then fatalError "createFilesystem(): $p_disk does not exist"; fi
+    
+    sleep 4 # add a delay - experiencing occasional "cannot stat" for mkfs
+    
+    log "createFilesystem(): Dump partition table for $p_disk"
+    fdisk -l 
     
     if ! mkfs.ext4 ${p_disk}1; then fatalError "createFilesystem(): mkfs.ext4 ${p_disk}1"; fi
     
@@ -376,15 +381,14 @@ set -x
     
     if ! mount ${p_disk}1 $p_filesystem; then fatalError "createFilesystem(): mount $p_disk $p_filesytem failed"; fi
 
-    blkid
-    sleep 5
+    log "createFilesystem(): Dump blkid"
     blkid
     
-    if ! blkid | egrep '${p_disk}1' | awk '{printf "%s\t${p_filesystem} \t ext4 \t defaults \t 1 \t2\n", $2}' >> /etc/fstab; then fatalError "createFilesystem(): fstab update failed"; fi
+    if ! blkid | egrep ${p_disk}1 | awk '{printf "%s\t'${p_filesystem}' \t ext4 \t defaults \t 1 \t2\n", $2}' >> /etc/fstab; then fatalError "createFilesystem(): fstab update failed"; fi
 
     log "createFilesystem() fstab success: $(grep $p_disk /etc/fstab)"
-set +x    
 
+    set +x    
 }
 
 createASM()
@@ -398,7 +402,7 @@ createASM()
     local l_disk=`basename $p_disk`
     local l_udev_file=/etc/udev/rules.d/99-oracle.rules
     
-    if [ [ -z $p_diskgroup ] || [ -z $p_disk ] ]; then
+    if [ -z $p_diskgroup ] || [ -z $p_disk ]; then
         fatalError "createASM(): Expected usage [diskGroup,disk] got [$p_diskgroup,$p_disk]"
     fi
     
