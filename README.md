@@ -26,6 +26,8 @@ Modify ~/oracledb-build.ini
 ### Step 2 Execute the script using the Terradata repo
 git clone https://github.com/mgis-architects/terraform
 
+cd azure/oracledb
+
 cp oracledb-azure.tfvars ~/oracledb-azure.tfvars
 
 Modify ~/oracledb-azure.tfvars
