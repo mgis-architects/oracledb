@@ -437,13 +437,13 @@ function allocateStorage()
 
     l_str=""
     if [ -z $u01_Disk_Size_In_GB ]; then
-        l_str=$l_str || "asmStorage(): u01_Disk_Size_In_GB not found in $INI_FILE; "
+        l_str+="asmStorage(): u01_Disk_Size_In_GB not found in $INI_FILE; "
     fi
     if [ -z $asm_Data_Disk_Size_In_GB ]; then
-        l_str=$l_str || "asmStorage(): asm_Data_Disk_Size_In_GB not found in $INI_FILE; "
+        l_str+="asmStorage(): asm_Data_Disk_Size_In_GB not found in $INI_FILE; "
     fi
     if [ -z $asm_Reco_Disk_Size_In_GB ]; then
-        l_str=$l_str || "asmStorage(): asm_Reco_Disk_Size_In_GB not found in $INI_FILE; "
+        l_str+="asmStorage(): asm_Reco_Disk_Size_In_GB not found in $INI_FILE; "
     fi
     if ! [ -z $l_str ]; then
         fatalError "allocateStorage(): $l_str"
@@ -501,13 +501,13 @@ function mountMedia() {
 
     l_str=""
     if [ -z $mediaStorageAccountKey ]; then
-        l_str=$l_str || "mediaStorageAccountKey not found in $INI_FILE; "
+        l_str+="mediaStorageAccountKey not found in $INI_FILE; "
     fi
     if [ -z $mediaStorageAccount ]; then
-        l_str=$l_str || "mediaStorageAccount not found in $INI_FILE; "
+        l_str+="mediaStorageAccount not found in $INI_FILE; "
     fi
     if [ -z $mediaStorageAccountURL ]; then
-        l_str=$l_str || "mediaStorageAccountURL not found in $INI_FILE; "
+        l_str+="mediaStorageAccountURL not found in $INI_FILE; "
     fi
     if ! [ -z $l_str ]; then
         fatalError "mountMedia(): $l_str"
@@ -728,19 +728,19 @@ function createCDB()
     
     l_str=""
     if [ -z $sysPassword ]; then
-        l_str=$l_str || "sysPassword not found in $INI_FILE; "
+        l_str+="sysPassword not found in $INI_FILE; "
     fi
     if [ -z $systemPassword ]; then
-        l_str=$l_str || "systemPassword not found in $INI_FILE; "
+        l_str+="systemPassword not found in $INI_FILE; "
     fi
     if [ -z $cdbName ]; then
-        l_str=$l_str || "cdbName not found in $INI_FILE; "
+        l_str+="cdbName not found in $INI_FILE; "
     fi
     if [ -z $cdbDomain ]; then
-        l_str=$l_str || "cdbDomain not found in $INI_FILE; "
+        l_str+="cdbDomain not found in $INI_FILE; "
     fi
     if [ -z $asmMonitorPassword ]; then
-        l_str=$l_str || "asmMonitorPassword not found in $INI_FILE; "
+        l_str+="asmMonitorPassword not found in $INI_FILE; "
     fi
     if [ ! -z $l_str ]; then
         fatalError "createCDB(): $l_str"
@@ -788,19 +788,19 @@ function createPDB() {
     
     l_str=""
     if [ -z $sysPassword ]; then
-        l_str=$l_str || "sysPassword not found in $INI_FILE; "
+        l_str+="sysPassword not found in $INI_FILE; "
     fi
     if [ -z $cdbName ]; then
-        l_str=$l_str || "cdbName not found in $INI_FILE; "
+        l_str+="cdbName not found in $INI_FILE; "
     fi
     if [ -z $pdbName ]; then
-        l_str=$l_str || "pdbName not found in $INI_FILE; "
+        l_str+="pdbName not found in $INI_FILE; "
     fi
     if [ -z $pdbDBA ]; then
-        l_str=$l_str || "pdbDBA not found in $INI_FILE; "
+        l_str+="pdbDBA not found in $INI_FILE; "
     fi
     if [ -z $pdbDBApassword ]; then
-        l_str=$l_str || "pdbDBApassword not found in $INI_FILE; "
+        l_str+="pdbDBApassword not found in $INI_FILE; "
     fi
     if ! [ -z $l_str ]; then
         fatalError "createPDB(): $l_str"
@@ -836,7 +836,7 @@ function enableArchiveLog() {
     
     l_str=""
     if [ -z $cdbName ]; then
-        l_str=$l_str || "cdbName not found in $INI_FILE; "
+        l_str+="cdbName not found in $INI_FILE; "
     fi
     if ! [ -z $l_str ]; then
         fatalError "createPDB(): $l_str"
