@@ -84,6 +84,8 @@ function installRPMs()
     STR="$STR compat-libstdc++-33.x86_64 gcc.x86_64 gcc-c++.x86_64 compat-libstdc++-33.i686 glibc-devel.i686 glibc-devel.x86_64 libstdc++.i686"
     STR="$STR libstdc++-devel.x86_64 libstdc++-devel.i686 libaio.i686 libaio-devel.i686 libaio-devel.x86_64 libXext.i686 libXtst.i686"
     STR="$STR nfs-utils.x86_64 nscd.x86_64 xauth xorg-x11-utils zip dos2unix bind-utils openssh-clients rsync ksh cifs-utils"
+    STR="$STR psmisc" # needed for fuser
+    # STR="$STR expect"
     
     yum makecache fast
     
@@ -812,6 +814,12 @@ function createPDB() {
     ADMIN USER ${pdbDBA} IDENTIFIED BY ${pdbDBApassword} ROLES=(DBA);
 
     ALTER PLUGGABLE DATABASE ${pdbName} open;
+    alter pluggable database all save state;
+    
+    -- 1929745.1 Jan 2017 psu java mitigation 
+    @?/rdbms/admin/dbmsjdev.sql
+    exec dbms_java_dev.disable
+
 EOFsp1
 EOFpdb
 
@@ -849,6 +857,124 @@ EOFpdb
 
 }
 
+function updateOpatch()
+{
+    local l_tmp_script=$LOG_DIR/$g_prog.installOpatch.$$.sh
+    local l_opatch_grid_log=$LOG_DIR/$g_prog.installOpatch.$$.opatchinstallgrid.log
+    local l_opatch_oracle_log=$LOG_DIR/$g_prog.installOpatch.$$.opatchinstalldatabase.log
+    local l_media=/mnt/software/database12102/p6880880_121010_Linux-x86-64.zip
+        
+    if [ ! -f ${l_media} ]; then
+        fatalError "updateOpatch(): media missing ${l_media}"
+    fi
+    
+    cat > $l_tmp_script << EOFopatch
+    cd \$ORACLE_HOME
+    unzip -oq ${l_media}
+    \$ORACLE_HOME/OPatch/opatch version
+EOFopatch
+
+    su - grid -c "bash -x $l_tmp_script" |tee ${l_opatch_grid_log}
+    su - oracle -c "bash -x $l_tmp_script" |tee ${l_opatch_oracle_log}
+}
+
+# Not needed with latest opatch
+# function generateOCM()
+# {
+# 
+#     local l_tmp_script=$LOG_DIR/$g_prog.generateOCM.$$.sh
+#     local l_log=$LOG_DIR/$g_prog.generateOCM.$$.generateOCM.log
+# 
+#     cat > ${l_tmp_script} << EOFocm
+# 
+#     EMOCMRSP=\$ORACLE_HOME/OPatch/ocm/bin/emocmrsp
+#     OCM_FILE=/u01/app/oracle/ocm.rsp
+# 
+#     /usr/bin/expect - <<ENDOFFILE
+#     spawn \$EMOCMRSP -no_banner -output \$OCM_FILE
+#     expect {
+#       "Email address/User Name:"
+#       {
+#         send "\\n
+#     "
+#         exp_continue
+#       }
+#       "Do you wish to remain uninformed of security issues*"
+#       {
+#         send "Y\\n
+#     "
+#         exp_continue
+#       }
+#     }
+# ENDOFFILE
+# 
+#     chmod 644 \$OCM_FILE
+# EOFocm
+# 
+#     su - oracle -c "bash -x $l_tmp_script" 2>&1 |tee ${l_log}
+# 
+# }
+
+function jan2017psu()
+{
+    #  README https://updates.oracle.com/Orion/Services/download?type=readme&aru=20758305
+    
+    local l_media=/mnt/software/database12102/p24917825_121020_Linux-x86-64.zip
+    local l_tmp_script1=$LOG_DIR/$g_prog.stagejan2017psu.$$.sh
+    local l_tmp_script2=$LOG_DIR/$g_prog.installjan2017psu.$$.sh
+    local l_log1=$LOG_DIR/$g_prog.stagejan2017psu.$$.log
+    local l_log2=$LOG_DIR/$g_prog.installjan2017psu.$$.log
+    local l_stage=$STAGE_DIR/jan2017psu
+    
+    cat > $l_tmp_script1 << EOFpsu1
+    rm -rf $l_stage
+    mkdir -p ${l_stage}
+    unzip -q -d ${l_stage} ${l_media}
+EOFpsu1
+
+    su - grid -c "bash -x $l_tmp_script1" |tee ${l_log1}
+
+    cat > $l_tmp_script2 << EOFpsu2
+    cd ${l_stage}
+    export PATH=\$PATH:/u01/app/grid/12.1.0/OPatch
+    opatchauto apply ./24917825
+    rm -rf $l_stage
+EOFpsu2
+
+    # opatchauto has to be run as root
+    su - -c "bash -x $l_tmp_script2" |tee ${l_log2}
+}
+
+function jan2017psuoracle()
+{
+    #  README https://updates.oracle.com/Orion/Services/download?type=readme&aru=20758305
+    
+    local l_media=/mnt/software/database12102/p24917825_121020_Linux-x86-64.zip
+    local l_tmp_script1=$LOG_DIR/$g_prog.stagejan2017psu.$$.sh
+    local l_tmp_script2=$LOG_DIR/$g_prog.installjan2017psu.$$.sh
+    local l_log1=$LOG_DIR/$g_prog.stagejan2017psu.$$.log
+    local l_log2=$LOG_DIR/$g_prog.installjan2017psu.$$.log
+    local l_stage=$STAGE_DIR/jan2017psu
+    
+    cat > $l_tmp_script1 << EOFpsu1
+    rm -rf $l_stage
+    mkdir -p ${l_stage}
+    unzip -q -d ${l_stage} ${l_media}
+EOFpsu1
+
+    su - grid -c "bash -x $l_tmp_script1" |tee ${l_log1}
+
+    cat > $l_tmp_script2 << EOFpsu2
+    cd ${l_stage}
+    export PATH=\$PATH:/u01/app/oracle/product/12.1.0/db_1/OPatch
+    opatchauto apply ./24917825 -oh /u01/app/oracle/product/12.1.0/db_1
+    rm -rf $l_stage
+EOFpsu2
+
+    # opatchauto has to be run as root
+    su - -c "bash -x $l_tmp_script2" |tee ${l_log2}
+}
+
 function run()
 {
     eval `grep platformEnvironment $INI_FILE`
@@ -877,6 +1003,9 @@ function run()
     gridConfigTool
     createRECOdiskgroup
     installOracleHome
+    updateOpatch
+    jan2017psu
+    jan2017psuoracle
     createCDB
     createPDB
     enableArchiveLog
