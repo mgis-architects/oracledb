@@ -1001,9 +1001,9 @@ function rebuildRedoLogs()
     alter database add logfile group 5 ('+DATA','+RECO') size 4096M;
     alter database add logfile group 6 ('+DATA','+RECO') size 4096M;
     alter database add logfile group 7 ('+DATA','+RECO') size 4096M;
-    alter system switch logfile;
-    alter system switch logfile;
-    alter system switch logfile;
+    alter system archive log current;
+    alter system archive log current;
+    alter system archive log current;
     shutdown immediate;
     startup;
     alter database drop logfile group 1;
