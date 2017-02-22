@@ -849,6 +849,10 @@ function enableArchiveLog() {
     startup mount;
     alter database archivelog;
     alter database open;
+    alter system archive log current;
+    alter database drop logfile group 1;
+    alter database drop logfile group 2;
+    alter database drop logfile group 3;
     archive log list;
 EOFsp1
 EOFpdb
