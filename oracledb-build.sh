@@ -1004,6 +1004,8 @@ function rebuildRedoLogs()
     alter system switch logfile;
     alter system switch logfile;
     alter system switch logfile;
+    shutdown immediate;
+    startup;
     alter database drop logfile group 1;
     alter database drop logfile group 2;
     alter database drop logfile group 3;
