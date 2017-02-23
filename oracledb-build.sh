@@ -1025,7 +1025,6 @@ function run()
     jan2017psuoracle
     createCDB
     createPDB
-    rebuildRedoLogs
     enableArchiveLog
 }
 
