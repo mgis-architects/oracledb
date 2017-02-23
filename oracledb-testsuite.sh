@@ -126,7 +126,6 @@ installSwingbench()
         fatalError "installSwingbench(): media missing ${l_media1}"
     fi
 
-
     ################################
     # Create script to run as oracle
     ################################
@@ -139,7 +138,6 @@ EOFsb
     # Run the script
     ################################
     su - oracle -c "bash -x $l_tmp_script" |tee ${l_swingbench_install_log}
-    
 }
 
 function installSimpleSchema() 
@@ -195,10 +193,12 @@ CREATE TABLE ade.CUSTOMERS
  PHONE_NUMBER varchar2(30)      
 ) tablespace USERS;
 
+CREATE SEQUENCE customer_id_seq start with 1 increment by 1 cache 20;
+
 begin
     for i in 1..10000 loop
         insert into ade.customers (customer_id, first_name, last_name, join_date)
-        values (i, 
+        values (customer_id_seq.nextval, 
                 dbms_random.string('U', 1), 
                 dbms_random.string('U', dbms_random.value(5,10)),
                 to_date(trunc(DBMS_RANDOM.VALUE(to_char(DATE '2000-01-01','J'),to_char(DATE '2016-12-31','J') ) ),'J' ));
