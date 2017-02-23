@@ -845,11 +845,24 @@ function enableArchiveLog() {
     cat > $l_tmp_script << EOFpdb
     export ORACLE_SID=${cdbName}
     sqlplus / as sysdba << EOFsp1
+    -- theres a RESETLOGS causing CORRUPT REDO bug lurking here, this seems to work around the issue
+    alter database add logfile group 4 ('+DATA','+RECO') size 4096M;
+    alter database add logfile group 5 ('+DATA','+RECO') size 4096M;
+    alter database add logfile group 6 ('+DATA','+RECO') size 4096M;
+    alter database add logfile group 7 ('+DATA','+RECO') size 4096M;
+    alter system switch logfile;
+    alter system switch logfile;
+    alter system switch logfile;
+    -- one will probably fail
+    alter database drop logfile group 1;
+    alter database drop logfile group 2;
+    alter database drop logfile group 3;
     shutdown immediate;
     startup mount;
     alter database archivelog;
     alter database open;
     alter system archive log current;
+    -- get the one we missed
     alter database drop logfile group 1;
     alter database drop logfile group 2;
     alter database drop logfile group 3;
@@ -977,50 +990,6 @@ EOFpsu2
 
     # opatchauto has to be run as root
     su - -c "bash -x $l_tmp_script2" |tee ${l_log2}
-}
-
-
-function rebuildRedoLogs()
-{
-
-
-    local l_tmp_script=$LOG_DIR/$g_prog.installOracleHome.$$.rebuildLogs.sh
-    local l_log=$LOG_DIR/$g_prog.installOracleHome.$$.rebuildLogs.log
-    
-    eval `grep cdbName $INI_FILE`
-    
-    l_str=""
-    if [ -z $cdbName ]; then
-        l_str+="cdbName not found in $INI_FILE; "
-    fi
-    if ! [ -z $l_str ]; then
-        fatalError "rebuildLogs(): $l_str"
-    fi
-
-    cat > $l_tmp_script << EOFpdb
-    export ORACLE_SID=${cdbName}
-    sqlplus / as sysdba << EOFrl1
-
-    alter database add logfile group 4 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 5 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 6 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 7 ('+DATA','+RECO') size 4096M;
-    alter system archive log current;
-    alter system archive log current;
-    alter system archive log current;
-    shutdown immediate;
-    startup;
-    alter database drop logfile group 1;
-    alter database drop logfile group 2;
-    alter database drop logfile group 3;
-
-    archive log list;
-EOFrl1
-EOFpdb
-
-    su - oracle -c "bash -x $l_tmp_script" |tee ${l_log}
-
-
 }
 
 function run()
