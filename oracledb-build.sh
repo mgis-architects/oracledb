@@ -77,8 +77,12 @@ function fixSwap()
 
 function installRPMs()
 {
+    UPDATE_RPM_LOG=$LOG_DIR/yum.${g_prog}_update.log.$$
     INSTALL_RPM_LOG=$LOG_DIR/yum.${g_prog}_install.log.$$
 
+    yum makecache fast
+    yum -y update |tee ${UPDATE_RPM_LOG}
+    
     STR=""
     STR="$STR tcsh.x86_64 unzip.x86_64 libaio.x86_64  libXext.x86_64 libXtst.x86_64 sysstat.x86_64 compat-libcap1.x86_64"
     STR="$STR compat-libstdc++-33.x86_64 gcc.x86_64 gcc-c++.x86_64 compat-libstdc++-33.i686 glibc-devel.i686 glibc-devel.x86_64 libstdc++.i686"
@@ -87,7 +91,7 @@ function installRPMs()
     STR="$STR psmisc" # needed for fuser
     # STR="$STR expect"
     
-    yum makecache fast
+    
     
     echo "installRPMs(): to see progress tail $INSTALL_RPM_LOG"
     if ! yum -y install $STR > $INSTALL_RPM_LOG
@@ -846,26 +850,27 @@ function enableArchiveLog() {
     export ORACLE_SID=${cdbName}
     sqlplus / as sysdba << EOFsp1
     -- theres a RESETLOGS causing CORRUPT REDO bug lurking here, this seems to work around the issue
-    alter database add logfile group 4 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 5 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 6 ('+DATA','+RECO') size 4096M;
-    alter database add logfile group 7 ('+DATA','+RECO') size 4096M;
-    alter system switch logfile;
-    alter system switch logfile;
-    alter system switch logfile;
+    --alter database add logfile group 4 ('+DATA','+RECO') size 4096M;
+    --alter database add logfile group 5 ('+DATA','+RECO') size 4096M;
+    --alter database add logfile group 6 ('+DATA','+RECO') size 4096M;
+    --alter database add logfile group 7 ('+DATA','+RECO') size 4096M;
+    --alter system switch logfile;
+    --alter system switch logfile;
+    --alter system switch logfile;
     -- one will probably fail
-    alter database drop logfile group 1;
-    alter database drop logfile group 2;
-    alter database drop logfile group 3;
+    --alter database drop logfile group 1;
+    --alter database drop logfile group 2;
+    --alter database drop logfile group 3;
     shutdown immediate;
     startup mount;
     alter database archivelog;
     alter database open;
-    alter system archive log current;
+    --alter system archive log current;
     -- get the one we missed
-    alter database drop logfile group 1;
-    alter database drop logfile group 2;
-    alter database drop logfile group 3;
+    --alter database drop logfile group 1;
+    --alter database drop logfile group 2;
+    --alter database drop logfile group 3;
+    --alter database drop logfile group 3;
     archive log list;
 EOFsp1
 EOFpdb
